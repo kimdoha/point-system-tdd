@@ -28,12 +28,8 @@ class PointService(
     }
 
     fun chargeUserPoint(id: Long, amount: Long): UserPoint {
-        if (id <= 0) throw IllegalArgumentException("유효하지 않은 유저 입니다.")
-        if (amount <= 0) throw IllegalArgumentException("포인트 충전 금액이 0보다 커야 합니다.")
-        if (amount > 1_000_000) throw IllegalArgumentException("포인트 충전 금액은 최대 100만원 입니다.")
-
         val userPoint = getUserPoint(id)
-        if (userPoint.point + amount > 2_000_000) throw IllegalArgumentException("포인트 최대 보유 금액은 200만원 입니다.")
+        if (userPoint.point + amount > 2_000_000) throw RuntimeException("포인트 최대 보유 금액은 200만원 입니다.")
 
         pointHistoryTable.insert(
             id = userPoint.id,
@@ -46,12 +42,8 @@ class PointService(
     }
 
     fun useUserPoint(id: Long, amount: Long): UserPoint {
-        if (id <= 0) throw throw IllegalArgumentException("유효하지 않은 유저 입니다.")
-        if (amount <= 0) throw IllegalArgumentException("포인트 사용 금액이 0보다 커야 합니다.")
-        if (amount > 1_000_000) throw IllegalArgumentException("포인트 사용 금액은 최대 100만원 입니다.")
-
         val userPoint = getUserPoint(id)
-        if(userPoint.point < amount) throw IllegalArgumentException("포인트 잔고가 부족합니다.")
+        if(userPoint.point < amount) throw RuntimeException("포인트 잔고가 부족합니다.")
 
         pointHistoryTable.insert(
             id = userPoint.id,
