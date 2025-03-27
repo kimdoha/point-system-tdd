@@ -1,6 +1,6 @@
 package io.hhplus.tdd.point.model
 
-import io.hhplus.tdd.point.UserPoint
+import io.hhplus.tdd.point.domain.UserPoint
 import kotlin.random.Random
 
 /**
@@ -16,6 +16,33 @@ object UserPointTextFixture {
         updateMillis = updateMillis,
     )
 
+    fun almostEmpty(
+        id: Long,
+        updateMillis: Long = System.currentTimeMillis(),
+    ) = UserPoint(
+        id = id,
+        point = 100_000,
+        updateMillis = updateMillis,
+    )
+
+    fun almostFull(
+        id: Long,
+        updateMillis: Long = System.currentTimeMillis(),
+    ) = UserPoint(
+        id = id,
+        point = 1_900_000L,
+        updateMillis = updateMillis,
+    )
+
+    fun full(
+        id: Long,
+        updateMillis: Long = System.currentTimeMillis(),
+    ) = UserPoint(
+        id = id,
+        point = 2_000_000L,
+        updateMillis = updateMillis,
+    )
+
     fun random(
         id: Long,
     ) = UserPoint(
@@ -24,13 +51,14 @@ object UserPointTextFixture {
         updateMillis = System.currentTimeMillis(),
     )
 
-    fun withBalance(
+    fun create(
         id: Long,
         point: Long,
+        updateMillis: Long = System.currentTimeMillis(),
     ) = UserPoint(
         id = id,
         point = point,
-        updateMillis = System.currentTimeMillis(),
+        updateMillis = updateMillis,
     )
 
     fun use(

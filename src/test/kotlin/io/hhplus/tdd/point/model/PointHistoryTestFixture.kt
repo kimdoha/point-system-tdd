@@ -1,7 +1,7 @@
 package io.hhplus.tdd.point.model
 
-import io.hhplus.tdd.point.PointHistory
-import io.hhplus.tdd.point.TransactionType
+import io.hhplus.tdd.point.domain.PointHistory
+import io.hhplus.tdd.point.domain.TransactionType
 
 /**
  * @author Doha Kim
@@ -9,32 +9,6 @@ import io.hhplus.tdd.point.TransactionType
 object PointHistoryTestFixture {
     private var idCounter = 1L
     private const val DEFAULT_AMOUNT = 1_000L
-
-    private fun charge(
-        id: Long = idCounter++,
-        userId: Long,
-        amount: Long = DEFAULT_AMOUNT,
-        updateMillis: Long = System.currentTimeMillis()
-    ) = PointHistory(
-        id = id,
-        userId = userId,
-        type = TransactionType.CHARGE,
-        amount = amount,
-        timeMillis = updateMillis,
-    )
-
-    private fun use(
-        id: Long = idCounter++,
-        userId: Long,
-        amount: Long = DEFAULT_AMOUNT,
-        timeMillis: Long = System.currentTimeMillis()
-    ) = PointHistory(
-        id = id,
-        userId = userId,
-        type = TransactionType.USE,
-        amount = amount,
-        timeMillis = timeMillis,
-    )
 
     fun getChargePointHistories(
         id: Long? = null,
@@ -91,4 +65,29 @@ object PointHistoryTestFixture {
         return history
     }
 
+    fun charge(
+        id: Long = idCounter++,
+        userId: Long,
+        amount: Long = DEFAULT_AMOUNT,
+        updateMillis: Long = System.currentTimeMillis()
+    ) = PointHistory(
+        id = id,
+        userId = userId,
+        type = TransactionType.CHARGE,
+        amount = amount,
+        timeMillis = updateMillis,
+    )
+
+    fun use(
+        id: Long = idCounter++,
+        userId: Long,
+        amount: Long = DEFAULT_AMOUNT,
+        timeMillis: Long = System.currentTimeMillis()
+    ) = PointHistory(
+        id = id,
+        userId = userId,
+        type = TransactionType.USE,
+        amount = amount,
+        timeMillis = timeMillis,
+    )
 }
