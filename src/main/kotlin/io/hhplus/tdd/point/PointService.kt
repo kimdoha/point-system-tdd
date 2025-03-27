@@ -29,7 +29,7 @@ class PointService(
 
     fun chargeUserPoint(id: Long, amount: Long): UserPoint {
         val userPoint = getUserPoint(id)
-        if (userPoint.point + amount > 2_000_000) throw RuntimeException("포인트 최대 보유 금액은 200만원 입니다.")
+        val updatedUserPoint = userPoint.charge(amount)
 
         pointHistoryTable.insert(
             id = userPoint.id,
@@ -38,12 +38,12 @@ class PointService(
             updateMillis = userPoint.updateMillis,
         )
 
-        return userPointTable.insertOrUpdate(id, userPoint.point + amount)
+        return userPointTable.insertOrUpdate(id, updatedUserPoint.point)
     }
 
     fun useUserPoint(id: Long, amount: Long): UserPoint {
         val userPoint = getUserPoint(id)
-        if(userPoint.point < amount) throw RuntimeException("포인트 잔고가 부족합니다.")
+        val updatedUserPoint = userPoint.use(amount)
 
         pointHistoryTable.insert(
             id = userPoint.id,
@@ -52,6 +52,6 @@ class PointService(
             updateMillis = userPoint.updateMillis,
         )
 
-        return userPointTable.insertOrUpdate(id, userPoint.point - amount)
+        return userPointTable.insertOrUpdate(id, updatedUserPoint.point)
     }
 }
