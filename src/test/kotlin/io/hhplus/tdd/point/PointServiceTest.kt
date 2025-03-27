@@ -15,10 +15,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 
 /**
  * @author Doha Kim
@@ -85,17 +81,6 @@ class PointServiceTest {
         verify(exactly = 1) { userPointTable.selectById(nonExistUserId) }
     }
 
-    @ParameterizedTest(name = "유저 ID가 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
-    @MethodSource("invalidUserIds")
-    fun `음수 또는 0인 유저 ID로 조회하면 IllegalArgumentException이 발생한다`(userId: Long) {
-        // given: 음수 또는 0인 유저 ID
-        // when: 해당 ID로 포인트 조회 시 && then: IllegalArgumentException 발생
-        assertThatThrownBy {
-            pointService.getUserPoint(userId)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 유저")
-    }
-
     @Test
     fun `유효한 유저 ID로 포인트 히스토리를 조회하면 해당 내역 목록을 반환한다`() {
         // given: 포인트 내역이 있는 유저
@@ -127,17 +112,6 @@ class PointServiceTest {
         // then: 빈 목록이 반환된다
         assertThat(response).isEmpty()
         verify(exactly = 1) { pointHistoryTable.selectAllByUserId(userId)}
-    }
-
-    @ParameterizedTest(name = "유저 ID가 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
-    @MethodSource("invalidUserIds")
-    fun `음수 또는 0인 유저 ID로 히스토리 조회 시 IllegalArgumentException이 발생한다`(userId: Long) {
-        // given: 유효하지 않은 유저 ID
-        // when: 해당 ID로 히스토리 조회 시 && then: IllegalArgumentException 발생
-        assertThatThrownBy {
-            pointService.getUserPointHistories(userId)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 유저")
     }
 
     @Test
@@ -200,37 +174,15 @@ class PointServiceTest {
         verify(exactly = 1) { userPointTable.insertOrUpdate(userId, chargePointAmount) }
     }
 
-    @ParameterizedTest(name = "유저 ID가 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
-    @MethodSource("invalidUserIds")
-    fun `음수 또는 0인 유저 ID로 충전 시 IllegalArgumentException이 발생한다`(userId: Long) {
-        // given: 유효하지 않은 유저 ID
-        // when & then: 충전 시도 시 예외 발생
-        assertThatThrownBy {
-            pointService.chargeUserPoint(userId, 1_000L)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 유저")
-    }
-
-    @ParameterizedTest(name = "포인트 충전 금액이 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
-    @MethodSource("invalidPointAmounts")
-    fun `0 이하의 금액으로 충전 시 IllegalArgumentException이 발생한다`(pointAmount: Long) {
-        // given: 유효한 유저 ID와 0 이하의 충전 금액
-        // when & then: 충전 시도 시 예외 발생
-
-        assertThatThrownBy {
-            pointService.chargeUserPoint(1L, pointAmount)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-    }
-
     @Test
-    fun `100만원 초과 금액으로 충전 시 IllegalArgumentException이 발생한다`() {
+    fun `100만원 초과 금액으로 충전 시 RuntimeException이 발생한다`() {
         // given: 유효한 유저 ID와 100만원 초과 충전 금액
         // when & then: 충전 시도 시 예외 발생
 
         assertThatThrownBy {
             val exceedMaximumChargeAmount = 1_000_001L
             pointService.chargeUserPoint(1L, exceedMaximumChargeAmount)
-        }.isInstanceOf(IllegalArgumentException::class.java)
+        }.isInstanceOf(RuntimeException::class.java)
     }
 
     @Test
@@ -263,7 +215,7 @@ class PointServiceTest {
         val expectPointHistory = PointHistoryTestFixture.charge(userId, chargePointAmount, updateMillis)
 
         every { userPointTable.selectById(userId) } returns expectUserPoint
-        every { pointHistoryTable.insert(userId, chargePointAmount, TransactionType.CHARGE, updateMillis) } returns expectPointHistory
+        every { pointHistoryTable.insert(userId, chargePointAmount, TransactionType.CHARGE, any()) } returns expectPointHistory
         every { userPointTable.insertOrUpdate(userId, chargePointAmount) } returns expectUserUpdatePoint
 
         // when: 포인트 충전 시
@@ -271,7 +223,7 @@ class PointServiceTest {
 
         // then: 포인트 히스토리 테이블에 충전 내역이 정확히 기록됨
         verify(exactly = 1) {
-            pointHistoryTable.insert(userId, chargePointAmount, TransactionType.CHARGE, updateMillis,)
+            pointHistoryTable.insert(userId, chargePointAmount, TransactionType.CHARGE, any())
         }
     }
 
@@ -287,7 +239,7 @@ class PointServiceTest {
         val expectUserUpdatePointHistory = PointHistoryTestFixture.use(userId, usePointAmount, updateMillis)
 
         every { userPointTable.selectById(userId) } returns userPoint
-        every { pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, updateMillis) } returns expectUserUpdatePointHistory
+        every { pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, any()) } returns expectUserUpdatePointHistory
         every { userPointTable.insertOrUpdate(userId, userPoint.point - usePointAmount) } returns expectUserUpdatePoint
 
         // when: 포인트 사용 시
@@ -299,39 +251,8 @@ class PointServiceTest {
         assertThat(response.updateMillis).isNotNull()
 
         verify(exactly = 1) { userPointTable.selectById(userId) }
-        verify(exactly = 1) { pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, updateMillis) }
+        verify(exactly = 1) { pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, any()) }
         verify(exactly = 1) { userPointTable.insertOrUpdate(userId, expectUserUpdatePoint.point) }
-    }
-
-    @ParameterizedTest(name = "유저 ID가 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
-    @MethodSource("invalidUserIds")
-    fun `음수 또는 0인 유저 ID로 포인트 사용 시 IllegalArgumentException이 발생한다`(userId: Long) {
-        // given: 유효하지 않은 유저 ID
-        // when & then: 사용 시도 시 예외 발생
-        assertThatThrownBy {
-            pointService.useUserPoint(userId, 1_000L)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("유효하지 않은 유저")
-    }
-
-    @ParameterizedTest(name = "포인트 사용 금액 {0}인 경우 사용 시 IllegalArgumentException이 발생한다")
-    @MethodSource("invalidPointAmounts")
-    fun `0 이하의 금액으로 포인트 사용 시 IllegalArgumentException이 발생한다`(pointAmount: Long) {
-        // given: 유효한 유저 ID와 0 이하의 사용 금액
-        // when & then: 사용 시도 시 예외 발생
-        assertThatThrownBy {
-            pointService.useUserPoint(1L, pointAmount)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-    }
-
-    @Test
-    fun `100만원 초과 금액으로 포인트 사용 시 IllegalArgumentException이 발생한다`() {
-        // given: 유효한 유저 ID와 100만원 초과 사용 금액
-        // when & then: 사용 시도 시 예외 발생
-        assertThatThrownBy {
-            val exceedMaximumUseAmount = 1_000_001L
-            pointService.useUserPoint(1L, exceedMaximumUseAmount)
-        }.isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test
@@ -365,7 +286,7 @@ class PointServiceTest {
         val expectPointHistory = PointHistoryTestFixture.use(userId, usePointAmount, updateMillis)
 
         every { userPointTable.selectById(userId) } returns expectUserPoint
-        every { pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, updateMillis) } returns expectPointHistory
+        every { pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE,  any()) } returns expectPointHistory
         every { userPointTable.insertOrUpdate(userId, expectUserPoint.point - usePointAmount) } returns expectUserUpdatePoint
 
         // when: 포인트 사용 시
@@ -373,25 +294,7 @@ class PointServiceTest {
 
         // then: 포인트 히스토리 테이블에 사용 내역이 정확히 기록됨
         verify(exactly = 1) {
-            pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, updateMillis)
-        }
-    }
-
-    companion object {
-        @JvmStatic // 자바 정적 메소드 형태
-        fun invalidUserIds(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of(-1L),
-                Arguments.of(0L),
-            )
-        }
-
-        @JvmStatic
-        fun invalidPointAmounts(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of(-1L),
-                Arguments.of(0L),
-            )
+            pointHistoryTable.insert(userId, usePointAmount, TransactionType.USE, any())
         }
     }
 }

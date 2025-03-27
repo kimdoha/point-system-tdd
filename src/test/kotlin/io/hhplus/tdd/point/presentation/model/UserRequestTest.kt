@@ -22,7 +22,7 @@ class UserRequestTest {
         assertThatCode { request.validate() }.doesNotThrowAnyException()
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "유저 ID가 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
     @MethodSource("invalidUserIdsProvider")
     fun `유저 요청 - 유효하지 않은 데이터는 예외를 발생시킨다`(userId: Long) {
         // given
@@ -31,6 +31,7 @@ class UserRequestTest {
         // when & then
         assertThatThrownBy { request.validate() }
             .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("유효하지 않은 유저")
     }
 
     companion object {

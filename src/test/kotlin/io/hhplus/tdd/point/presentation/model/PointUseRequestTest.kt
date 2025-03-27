@@ -24,8 +24,7 @@ class PointUseRequestTest {
         assertThatCode { request.validate() }.doesNotThrowAnyException()
     }
 
-
-    @ParameterizedTest
+    @ParameterizedTest(name = "포인트 사용 금액 {0}인 경우 사용 시 IllegalArgumentException이 발생한다")
     @MethodSource("invalidUseRequestsProvider")
     fun `포인트 사용 요청 - 유효하지 않은 데이터는 예외를 발생시킨다`(userId: Long, amount: Long) { // given
         val request = PointUseRequest(userId, amount)

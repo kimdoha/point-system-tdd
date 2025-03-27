@@ -25,7 +25,7 @@ class PointChargeRequestTest {
     }
 
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "포인트 충전 금액이 {0}인 경우 충전 시 IllegalArgumentException이 발생한다")
     @MethodSource("invalidChargeRequestsProvider")
     fun `포인트 충전 요청 - 유효하지 않은 데이터는 예외를 발생시킨다`(userId: Long, amount: Long) { // given
         val request = PointUseRequest(userId, amount)

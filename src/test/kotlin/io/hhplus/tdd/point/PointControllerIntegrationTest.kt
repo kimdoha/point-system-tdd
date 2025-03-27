@@ -2,6 +2,7 @@ package io.hhplus.tdd.point
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
+import io.hhplus.tdd.point.domain.TransactionType
 import io.hhplus.tdd.point.model.PointHistoryTestFixture
 import io.hhplus.tdd.point.model.UserPointTextFixture
 import io.mockk.every
@@ -84,8 +85,8 @@ class PointControllerIntegrationTest {
         // given
         val userId = 1L
         val amount = 2_000L
-        val expectUserPoint = UserPointTextFixture.withBalance(userId, amount)
-        val expectChargePointHistory = PointHistoryTestFixture.getChargePointHistories(userId = userId, amount = amount)
+        val expectUserPoint = UserPointTextFixture.create(userId, amount)
+        val expectChargePointHistory = PointHistoryTestFixture.getChargePointHistory(userId = userId, amount = amount)
 
         every { pointService.chargeUserPoint(userId, amount) } returns expectUserPoint
         every { pointService.getUserPointHistories(userId) } returns expectChargePointHistory
@@ -111,7 +112,7 @@ class PointControllerIntegrationTest {
         // given
         val userId = 1L
         val (amount, originPoint) = Pair(2_000L, 2_000L)
-        val originUserPoint = UserPointTextFixture.withBalance(userId, originPoint)
+        val originUserPoint = UserPointTextFixture.create(userId, originPoint)
         val expectUserPoint = UserPointTextFixture.use(userId, originUserPoint.point, amount)
         val expectUsePointHistory = PointHistoryTestFixture.getUsePointHistory(userId = userId, amount = amount)
 
