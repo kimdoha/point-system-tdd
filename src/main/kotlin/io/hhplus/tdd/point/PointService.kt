@@ -5,9 +5,9 @@ import io.hhplus.tdd.database.UserPointTable
 import io.hhplus.tdd.point.domain.PointHistory
 import io.hhplus.tdd.point.domain.TransactionType
 import io.hhplus.tdd.point.domain.UserPoint
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * @author Doha Kim
@@ -17,7 +17,7 @@ class PointService(
     private val userPointTable: UserPointTable,
     private val pointHistoryTable: PointHistoryTable,
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val lockMap: ConcurrentHashMap<Long, ReentrantLock> = ConcurrentHashMap()
 
     fun getUserPoint(id: Long): UserPoint {
         return userPointTable.selectById(id)
@@ -28,30 +28,43 @@ class PointService(
     }
 
     fun chargeUserPoint(id: Long, amount: Long): UserPoint {
-        val userPoint = getUserPoint(id)
-        val updatedUserPoint = userPoint.charge(amount)
+        val lock = lockMap.computeIfAbsent(id) { ReentrantLock() }
+        lock.lock()
+        try {
+            val userPoint = getUserPoint(id)
+            val updatedUserPoint = userPoint.charge(amount)
 
-        pointHistoryTable.insert(
-            id = userPoint.id,
-            amount = amount,
-            transactionType = TransactionType.CHARGE,
-            updateMillis = userPoint.updateMillis,
-        )
+            pointHistoryTable.insert(
+                id = userPoint.id,
+                amount = amount,
+                transactionType = TransactionType.CHARGE,
+                updateMillis = userPoint.updateMillis,
+            )
 
-        return userPointTable.insertOrUpdate(id, updatedUserPoint.point)
+            return userPointTable.insertOrUpdate(id, updatedUserPoint.point)
+        } finally {
+            lock.unlock()
+        }
     }
 
     fun useUserPoint(id: Long, amount: Long): UserPoint {
-        val userPoint = getUserPoint(id)
-        val updatedUserPoint = userPoint.use(amount)
+        val lock = lockMap.computeIfAbsent(id) { ReentrantLock() }
+        lock.lock()
+        try {
+            val userPoint = getUserPoint(id)
+            val updatedUserPoint = userPoint.use(amount)
 
-        pointHistoryTable.insert(
-            id = userPoint.id,
-            amount = amount,
-            transactionType = TransactionType.USE,
-            updateMillis = userPoint.updateMillis,
-        )
+            pointHistoryTable.insert(
+                id = userPoint.id,
+                amount = amount,
+                transactionType = TransactionType.USE,
+                updateMillis = userPoint.updateMillis,
+            )
 
-        return userPointTable.insertOrUpdate(id, updatedUserPoint.point)
+            return userPointTable.insertOrUpdate(id, updatedUserPoint.point)
+        } finally {
+            lock.unlock()
+        }
+
     }
 }

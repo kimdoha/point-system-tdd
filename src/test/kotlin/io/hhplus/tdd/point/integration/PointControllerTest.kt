@@ -1,7 +1,8 @@
-package io.hhplus.tdd.point
+package io.hhplus.tdd.point.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
+import io.hhplus.tdd.point.PointService
 import io.hhplus.tdd.point.domain.TransactionType
 import io.hhplus.tdd.point.model.PointHistoryTestFixture
 import io.hhplus.tdd.point.model.UserPointTextFixture
@@ -26,7 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-class PointControllerIntegrationTest {
+class PointControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
